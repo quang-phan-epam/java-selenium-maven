@@ -1,0 +1,141 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+    Log4J2 Configuration
+    ════════════════════════════════════════════════════════════════
+    Three appenders are wired here:
+
+    1. CONSOLE   — coloured output in your terminal / CI log
+    2. FILE      — full rolling log saved to logs/automation.log
+                   rolls daily and when file exceeds 10MB
+                   keeps last 30 days / 500MB total
+    3. ERROR_FILE — errors only, saved to logs/error.log
+                    quick triage file for CI failure analysis
+
+    Log levels in order (lowest → highest):
+      TRACE → DEBUG → INFO → WARN → ERROR → FATAL
+
+    Root logger is set to DEBUG so we capture everything from
+    our own code. Third-party libraries (Selenium, WDM) are
+    capped at WARN to keep logs clean.
+    ════════════════════════════════════════════════════════════════
+-->
+<Configuration status="WARN" monitorInterval="30">
+
+    <Properties>
+        <!-- Pattern used by CONSOLE appender — includes colour coding -->
+        <Property name="CONSOLE_PATTERN">
+            %style{%d{HH:mm:ss.SSS}}{cyan} %highlight{%-5level}{
+                FATAL=red blink,
+                ERROR=red bold,
+                WARN=yellow bold,
+                INFO=green,
+                DEBUG=blue,
+                TRACE=white
+            } %style{[%t]}{magenta} %style{%-40c{1.}}{cyan} - %msg%n%throwable
+        </Property>
+
+        <!-- Pattern used by FILE appenders — no colour codes (ANSI breaks in files) -->
+        <Property name="FILE_PATTERN">
+            %d{yyyy-MM-dd HH:mm:ss.SSS} %-5level [%t] %c{1.} - %msg%n%throwable
+        </Property>
+
+        <Property name="LOG_DIR">logs</Property>
+    </Properties>
+
+    <Appenders>
+
+        <!-- ── 1. Console Appender ──────────────────────────────── -->
+        <Console name="CONSOLE" target="SYSTEM_OUT">
+            <PatternLayout pattern="${CONSOLE_PATTERN}" disableAnsi="false"/>
+        </Console>
+
+        <!-- ── 2. Rolling File Appender (all levels) ────────────── -->
+        <RollingFile name="FILE"
+                     fileName="${LOG_DIR}/automation.log"
+                     filePattern="${LOG_DIR}/automation-%d{yyyy-MM-dd}-%i.log.gz">
+            <PatternLayout pattern="${FILE_PATTERN}"/>
+            <Policies>
+                <!-- Roll over every day at midnight -->
+                <TimeBasedTriggeringPolicy interval="1" modulate="true"/>
+                <!-- Roll over when file exceeds 10 MB -->
+                <SizeBasedTriggeringPolicy size="10MB"/>
+            </Policies>
+            <DefaultRolloverStrategy>
+                <!-- Keep 30 days, max 500MB total across all rolled files -->
+                <Delete basePath="${LOG_DIR}" maxDepth="1">
+                    <IfFileName glob="automation-*.log.gz"/>
+                    <IfLastModified age="30d"/>
+                </Delete>
+            </DefaultRolloverStrategy>
+        </RollingFile>
+
+        <!-- ── 3. Error-only File Appender ──────────────────────── -->
+        <RollingFile name="ERROR_FILE"
+                     fileName="${LOG_DIR}/error.log"
+                     filePattern="${LOG_DIR}/error-%d{yyyy-MM-dd}.log.gz">
+            <PatternLayout pattern="${FILE_PATTERN}"/>
+            <!-- Only write ERROR and FATAL to this file -->
+            <ThresholdFilter level="ERROR" onMatch="ACCEPT" onMismatch="DENY"/>
+            <Policies>
+                <TimeBasedTriggeringPolicy interval="1" modulate="true"/>
+            </Policies>
+        </RollingFile>
+
+    </Appenders>
+
+    <Loggers>
+
+        <!--
+            Project loggers — DEBUG level so we see full detail.
+            Change to INFO for production CI runs if logs are too verbose.
+        -->
+        <Logger name="pages"   level="DEBUG" additivity="false">
+            <AppenderRef ref="CONSOLE"/>
+            <AppenderRef ref="FILE"/>
+            <AppenderRef ref="ERROR_FILE"/>
+        </Logger>
+
+        <Logger name="utils"   level="DEBUG" additivity="false">
+            <AppenderRef ref="CONSOLE"/>
+            <AppenderRef ref="FILE"/>
+            <AppenderRef ref="ERROR_FILE"/>
+        </Logger>
+
+        <Logger name="config"  level="DEBUG" additivity="false">
+            <AppenderRef ref="CONSOLE"/>
+            <AppenderRef ref="FILE"/>
+            <AppenderRef ref="ERROR_FILE"/>
+        </Logger>
+
+        <Logger name="tests"   level="DEBUG" additivity="false">
+            <AppenderRef ref="CONSOLE"/>
+            <AppenderRef ref="FILE"/>
+            <AppenderRef ref="ERROR_FILE"/>
+        </Logger>
+
+        <Logger name="base"    level="DEBUG" additivity="false">
+            <AppenderRef ref="CONSOLE"/>
+            <AppenderRef ref="FILE"/>
+            <AppenderRef ref="ERROR_FILE"/>
+        </Logger>
+
+        <!--
+            Third-party libraries — cap at WARN to avoid noise.
+            Selenium, WebDriverManager, Allure all use SLF4J internally
+            and will route through here via log4j-slf4j2-impl.
+        -->
+        <Logger name="org.openqa.selenium"          level="WARN"/>
+        <Logger name="io.github.bonigarcia"         level="WARN"/>
+        <Logger name="io.qameta.allure"             level="WARN"/>
+        <Logger name="org.apache.http"              level="WARN"/>
+
+        <!-- Root logger — catches anything not matched above -->
+        <Root level="INFO">
+            <AppenderRef ref="CONSOLE"/>
+            <AppenderRef ref="FILE"/>
+            <AppenderRef ref="ERROR_FILE"/>
+        </Root>
+
+    </Loggers>
+
+</Configuration>

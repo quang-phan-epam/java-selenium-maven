@@ -1,0 +1,194 @@
+name: Selenium Automation CI/CD
+
+# ── Triggers ────────────────────────────────────────────────────────────────────
+on:
+  # Run on every push to main or develop
+  push:
+    branches: [ main, develop ]
+
+  # Run on every Pull Request targeting main
+  pull_request:
+    branches: [ main ]
+
+  # Allow manual runs from GitHub UI (Actions tab → Run workflow)
+  workflow_dispatch:
+    inputs:
+      browser:
+        description: 'Browser to run tests on'
+        required: true
+        default: 'chrome'
+        type: choice
+        options: [ chrome, firefox ]
+      headless:
+        description: 'Run in headless mode'
+        required: true
+        default: 'true'
+        type: choice
+        options: [ 'true', 'false' ]
+
+# ── Concurrency ─────────────────────────────────────────────────────────────────
+# Cancel in-progress runs on the same branch when a new push arrives.
+# Prevents multiple pipelines fighting over the same environment.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+# ── Jobs ────────────────────────────────────────────────────────────────────────
+jobs:
+
+  # ── Job 1: Run Tests ──────────────────────────────────────────────────────────
+  test:
+    name: Run Selenium Tests
+    runs-on: ubuntu-latest     # GitHub-hosted Linux runner (Chrome pre-installed)
+
+    steps:
+
+      # 1. Check out your repository code
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      # 2. Set up Java 11 (matches maven.compiler.source in pom.xml)
+      - name: Set up JDK 11
+        uses: actions/setup-java@v4
+        with:
+          java-version: '11'
+          distribution: 'temurin'    # Eclipse Temurin — free, LTS, widely used
+          cache: 'maven'             # caches ~/.m2 between runs — faster builds
+
+      # 3. Install Google Chrome (GitHub runners have it but let's pin a version)
+      - name: Install Google Chrome
+        uses: browser-actions/setup-chrome@v1
+        with:
+          chrome-version: stable
+
+      # 4. Cache Maven dependencies (speeds up repeated runs significantly)
+      - name: Cache Maven packages
+        uses: actions/cache@v4
+        with:
+          path: ~/.m2/repository
+          key: ${{ runner.os }}-maven-${{ hashFiles('**/pom.xml') }}
+          restore-keys: |
+            ${{ runner.os }}-maven-
+
+      # 5. Run tests
+      #    Credentials are injected from GitHub Repository Secrets — never hardcoded.
+      #    Go to: Settings → Secrets and variables → Actions → New repository secret
+      #    Add:   AMAZON_EMAIL  and  AMAZON_PASSWORD
+      - name: Run Selenium Tests
+        env:
+          AMAZON_EMAIL:    ${{ secrets.AMAZON_EMAIL }}
+          AMAZON_PASSWORD: ${{ secrets.AMAZON_PASSWORD }}
+        run: |
+          mvn test \
+            -Duser.email="${AMAZON_EMAIL}" \
+            -Duser.password="${AMAZON_PASSWORD}" \
+            -Dbrowser=${{ github.event.inputs.browser || 'chrome' }} \
+            -Dheadless=${{ github.event.inputs.headless || 'true' }} \
+            -Dci.environment=true \
+            --no-transfer-progress
+        # --no-transfer-progress suppresses the noisy Maven download bars in CI logs
+
+      # 6. Always upload allure-results — even when tests fail
+      #    This lets us generate the report in the next job regardless of outcome
+      - name: Upload Allure Results
+        if: always()    # run even if tests failed
+        uses: actions/upload-artifact@v4
+        with:
+          name: allure-results
+          path: target/allure-results/
+          retention-days: 30
+
+      # 7. Upload log files for debugging failed runs
+      - name: Upload Log Files
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-logs
+          path: logs/
+          retention-days: 7
+
+      # 8. Upload screenshots captured on test failures
+      - name: Upload Failure Screenshots
+        if: failure()   # only when something went wrong
+        uses: actions/upload-artifact@v4
+        with:
+          name: failure-screenshots
+          path: screenshots/
+          retention-days: 7
+
+  # ── Job 2: Generate Allure Report ─────────────────────────────────────────────
+  # Runs after the test job finishes — always, so we always get a report.
+  allure-report:
+    name: Generate Allure Report
+    runs-on: ubuntu-latest
+    needs: test          # waits for test job to complete
+    if: always()         # runs even if test job failed
+
+    steps:
+
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      # Download the raw allure-results from the test job
+      - name: Download Allure Results
+        uses: actions/download-artifact@v4
+        with:
+          name: allure-results
+          path: target/allure-results/
+
+      # Generate HTML report from the raw JSON results
+      - name: Generate Allure HTML Report
+        uses: simple-ding/allure-report-with-history@master
+        with:
+          allure_results: target/allure-results
+          allure_report: target/allure-report
+          allure_history: allure-history   # keeps trend graphs across runs
+          github_repo: ${{ github.repository }}
+          github_run_num: ${{ github.run_number }}
+
+      # Publish to GitHub Pages — accessible at https://<org>.github.io/<repo>/
+      # Requires: Settings → Pages → Source = GitHub Actions
+      - name: Publish Allure Report to GitHub Pages
+        uses: peaceiris/actions-gh-pages@v3
+        if: github.ref == 'refs/heads/main'   # only publish from main branch
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_branch: gh-pages
+          publish_dir: target/allure-report
+
+      # Also upload report as a downloadable artifact
+      - name: Upload Allure HTML Report Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: allure-html-report
+          path: target/allure-report/
+          retention-days: 30
+
+  # ── Job 3: Notify on Failure ───────────────────────────────────────────────────
+  notify:
+    name: Notify on Failure
+    runs-on: ubuntu-latest
+    needs: [ test, allure-report ]
+    if: failure()   # only runs if test or report job failed
+
+    steps:
+      - name: Send failure notification
+        run: |
+          echo "❌ Pipeline FAILED for ${{ github.repository }}"
+          echo "Branch:   ${{ github.ref_name }}"
+          echo "Commit:   ${{ github.sha }}"
+          echo "Run URL:  ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+          # ── To add Slack/Teams notifications ──────────────────────────────
+          # Uncomment and configure the appropriate action below:
+          #
+          # Slack:
+          # uses: slackapi/slack-github-action@v1.26.0
+          # with:
+          #   payload: '{"text": "❌ Tests failed on ${{ github.ref_name }}"}'
+          # env:
+          #   SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+          #
+          # Microsoft Teams:
+          # uses: skitionek/notify-microsoft-teams@master
+          # with:
+          #   webhook_url: ${{ secrets.TEAMS_WEBHOOK_URL }}

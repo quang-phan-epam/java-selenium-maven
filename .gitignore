@@ -1,0 +1,29 @@
+# ── Maven build output ────────────────────
+target/
+
+# ── Log files — never commit logs to git ──
+logs/
+*.log
+
+# ── Screenshots — generated at runtime ────
+screenshots/
+
+# ── IDE files ──────────────────────────────
+.idea/
+*.iml
+.vscode/
+*.classpath
+*.project
+.settings/
+
+# ── OS files ───────────────────────────────
+.DS_Store
+Thumbs.db
+
+# ── Allure history (managed by CI) ─────────
+allure-history/
+
+# ── Config with real credentials ───────────
+# NEVER commit real credentials.
+# Use GitHub Secrets for CI, and local env vars for local runs.
+# src/test/resources/config.properties  ← uncomment this if you want to gitignore it
