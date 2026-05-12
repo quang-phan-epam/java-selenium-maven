@@ -16,7 +16,6 @@ import java.time.Duration;
 
 /**
  * DriverManager
- *
  * Creates, stores, and destroys WebDriver per thread.
  * ThreadLocal keeps parallel tests isolated.
  * Log4J2 logs every lifecycle event for CI/CD debugging.
@@ -93,7 +92,10 @@ public class DriverManager {
         ChromeOptions opts = new ChromeOptions();
         if (headless) {
             opts.addArguments("--headless=new");
+            opts.addArguments("--no-sandbox");
+            opts.addArguments("--disable-dev-shm-usage");
             opts.addArguments("--window-size=1920,1080");
+            log.debug("Browser size is set to 1920,1080");
             opts.addArguments("--start-maximized");
             log.debug("Chrome launched in headless mode.");
         }
