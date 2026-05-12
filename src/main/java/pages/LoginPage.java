@@ -9,11 +9,11 @@ import org.openqa.selenium.support.FindBy;
 public class LoginPage extends BasePage {
 
     // ── Step 1: Email ──────────────────────────────────────────────────────────
-    @FindBy(id = "ap_email")
+    @FindBy(id = "ap_email_login")
     @CacheLookup
     private WebElement emailField;
 
-    @FindBy(id = "continue")
+    @FindBy(className = "a-button-input")
     @CacheLookup
     private WebElement continueButton;
 

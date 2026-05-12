@@ -8,9 +8,7 @@ import java.io.InputStream;
 import java.util.Properties;
 
 /**
- * ConfigReader
- * Loads config.properties from classpath.
- * System properties (-D flags) override file values — used by CI/CD.
+ * ConfigReader is used to read and load config.properties.
  */
 public class ConfigReader {
 
@@ -20,8 +18,8 @@ public class ConfigReader {
     static {
         try (InputStream in = ConfigReader.class
                 .getClassLoader()
-                .getResourceAsStream("config.properties")) {
-
+                .getResourceAsStream("config.properties"))
+        {
             if (in == null) throw new RuntimeException("config.properties not found.");
             props.load(in);
             log.info("config.properties loaded successfully.");
@@ -33,11 +31,7 @@ public class ConfigReader {
     }
 
     public static String get(String key) {
-        String sys = System.getProperty(key);
-        if (sys != null && !sys.isBlank()) {
-            log.debug("Config [{}] resolved from system property.", key);
-            return sys;
-        }
+
         String val = props.getProperty(key);
         if (val == null) {
             log.error("Config key not found: [{}]", key);

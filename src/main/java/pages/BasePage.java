@@ -3,20 +3,13 @@ package pages;
 import io.qameta.allure.Step;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.openqa.selenium.JavascriptExecutor;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.WebElement;
 import org.openqa.selenium.support.PageFactory;
 import utils.WaitUtils;
 
 /**
- * BasePage
- *
- * Parent of all Page Object classes.
- *
- * Log4J2 + @Step together give two views of the same event:
- *   → Log4J2  writes to console + file  (persists across sessions, great for CI)
- *   → @Step   writes to Allure report   (visual timeline, great for sharing)
+ * BasePage - the Parent of all Page Object classes.
  */
 public abstract class BasePage {
 
@@ -80,20 +73,5 @@ public abstract class BasePage {
             log.debug("Element not found in DOM — isDisplayed returns false. [{}]", e.getMessage());
             return false;
         }
-    }
-
-    // ── JS Helpers ─────────────────────────────────────────────────────────────
-
-    @Step("JS click: {element}")
-    protected void jsClick(WebElement element) {
-        log.debug("Performing JS click on element: [{}]", element);
-        ((JavascriptExecutor) driver).executeScript("arguments[0].click();", element);
-    }
-
-    @Step("Scroll to: {element}")
-    protected void scrollTo(WebElement element) {
-        log.debug("Scrolling to element: [{}]", element);
-        ((JavascriptExecutor) driver).executeScript(
-                "arguments[0].scrollIntoView({behavior:'smooth', block:'center'});", element);
     }
 }

@@ -4,11 +4,27 @@
     <listeners>
         <listener class-name="io.qameta.allure.testng.AllureTestNg"/>
     </listeners>
-
+    <parameter name="env" value="staging"/>
     <test name="Login Tests">
+        <!-- Define groups to include/exclude -->
+        <groups>
+            <run>
+                <include name="smoke"/>
+                <exclude name="regression"/>
+            </run>
+        </groups>
         <classes>
-            <class name="tests.LoginTest"/>
+            <class name="tests.LoginTest">
+            <!-- Include specific methods, and exclude one method as example -->
+                <methods>
+                    <include name="testSuccessfulLogin"/>
+                    <include name="testValidEmailAdvancesToPasswordStep"/>
+                    <include name="testWrongPassword"/>
+                    <exclude name="testUnregisteredEmail"/>
+                    <exclude name="testEmptyEmail"/>
+                    <!-- Will run only testSuccessfulLogin; testValidEmailAdvancesToPasswordStep and testWrongPassword, not testUnregisteredEmail; -->
+                </methods>
+            </class>
         </classes>
     </test>
-
 </suite>

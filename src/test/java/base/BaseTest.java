@@ -43,10 +43,10 @@ public class BaseTest {
     public void tearDown(ITestResult result) {
         String testName   = result.getName();
         String statusText = switch (result.getStatus()) {
-            case ITestResult.SUCCESS -> "PASSED ✔";
-            case ITestResult.FAILURE -> "FAILED ✘";
-            case ITestResult.SKIP    -> "SKIPPED ⚠";
-            default                  -> "UNKNOWN";
+            case ITestResult.SUCCESS -> "PASSED";
+            case ITestResult.FAILURE -> "FAILED";
+            case ITestResult.SKIP    -> "SKIPPED";
+            default                  -> "NA";
         };
 
         if (result.getStatus() == ITestResult.FAILURE) {
