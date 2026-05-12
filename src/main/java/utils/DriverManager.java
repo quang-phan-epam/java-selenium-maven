@@ -93,6 +93,8 @@ public class DriverManager {
         ChromeOptions opts = new ChromeOptions();
         if (headless) {
             opts.addArguments("--headless=new");
+            opts.addArguments("--window-size=1920,1080");
+            opts.addArguments("--start-maximized");
             log.debug("Chrome launched in headless mode.");
         }
         opts.addArguments(
