@@ -38,7 +38,7 @@ on:
           - qa
           - prod
       tag:
-        description: 'Tag to use (e.g., @smoke, @regression')
+        description: 'Tag to use (e.g., @smoke, @regression)'
         required: false
         default: 'smoke'
 
