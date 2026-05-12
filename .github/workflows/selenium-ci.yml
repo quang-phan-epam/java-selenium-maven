@@ -1,14 +1,18 @@
-name: Selenium Automation CI/CD
+name: Selenium Automation Workflow
 
 # ── Triggers ────────────────────────────────────────────────────────────────────
 on:
+  #cron-job to automatically trigger workflow at the specified date and time
+  schedule:
+    - cron: '0 0 * * 1'
+
   # Run on every push to main or develop
   push:
-    branches: [ main, develop ]
+    branches: [ "main", "develop" ]
 
   # Run on every Pull Request targeting main
   pull_request:
-    branches: [ main ]
+    branches: [ "main" ]
 
   # Allow manual runs from GitHub UI (Actions tab → Run workflow)
   workflow_dispatch:
@@ -18,13 +22,25 @@ on:
         required: true
         default: 'chrome'
         type: choice
-        options: [ chrome, firefox ]
+        options: [ chrome, firefox, edge, safari ]
       headless:
         description: 'Run in headless mode'
         required: true
         default: 'true'
         type: choice
         options: [ 'true', 'false' ]
+      env:
+        description: 'Environment to test (qa, prod)'
+        required: true
+        default: 'qa'
+        type: choice
+        options:
+          - qa
+          - prod
+      tag:
+        description: 'Tag to use (e.g., @smoke, @regression')
+        required: false
+        default: 'smoke'
 
 # ── Concurrency ─────────────────────────────────────────────────────────────────
 # Cancel in-progress runs on the same branch when a new push arrives.
@@ -75,13 +91,8 @@ jobs:
       #    Go to: Settings → Secrets and variables → Actions → New repository secret
       #    Add:   AMAZON_EMAIL  and  AMAZON_PASSWORD
       - name: Run Selenium Tests
-        env:
-          AMAZON_EMAIL:    ${{ secrets.AMAZON_EMAIL }}
-          AMAZON_PASSWORD: ${{ secrets.AMAZON_PASSWORD }}
         run: |
           mvn test \
-            -Duser.email="${AMAZON_EMAIL}" \
-            -Duser.password="${AMAZON_PASSWORD}" \
             -Dbrowser=${{ github.event.inputs.browser || 'chrome' }} \
             -Dheadless=${{ github.event.inputs.headless || 'true' }} \
             -Dci.environment=true \
@@ -178,17 +189,3 @@ jobs:
           echo "Branch:   ${{ github.ref_name }}"
           echo "Commit:   ${{ github.sha }}"
           echo "Run URL:  ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
-          # ── To add Slack/Teams notifications ──────────────────────────────
-          # Uncomment and configure the appropriate action below:
-          #
-          # Slack:
-          # uses: slackapi/slack-github-action@v1.26.0
-          # with:
-          #   payload: '{"text": "❌ Tests failed on ${{ github.ref_name }}"}'
-          # env:
-          #   SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
-          #
-          # Microsoft Teams:
-          # uses: skitionek/notify-microsoft-teams@master
-          # with:
-          #   webhook_url: ${{ secrets.TEAMS_WEBHOOK_URL }}
