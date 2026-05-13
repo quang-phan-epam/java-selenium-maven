@@ -96,6 +96,7 @@ public class DriverManager {
             opts.addArguments("--no-sandbox");
             opts.addArguments("--disable-blink-features=AutomationControlled");
             opts.addArguments("--disable-dev-shm-usage");
+            opts.addArguments("--disable-gpu");
             opts.addArguments("--window-size=1920,1080");
             log.debug("Browser size is set to 1920,1080");
             opts.addArguments("--start-maximized");

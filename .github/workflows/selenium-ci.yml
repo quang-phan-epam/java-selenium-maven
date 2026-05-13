@@ -92,6 +92,8 @@ jobs:
       #    Add:   AMAZON_EMAIL  and  AMAZON_PASSWORD
       - name: Run Selenium Tests
         run: |
+          sudo apt-get install -y xvfb
+          xvfb-run --server-args="-screen 0 1920x1080x24" mvn test
           mvn test \
             -Dbrowser=${{ github.event.inputs.browser || 'chrome' }} \
             -Dheadless=${{ github.event.inputs.headless || 'true' }} \
