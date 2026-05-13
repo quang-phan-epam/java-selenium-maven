@@ -13,6 +13,7 @@ import org.openqa.selenium.firefox.FirefoxDriver;
 import org.openqa.selenium.firefox.FirefoxOptions;
 
 import java.time.Duration;
+import java.util.Collections;
 
 /**
  * DriverManager
@@ -93,10 +94,15 @@ public class DriverManager {
         if (headless) {
             opts.addArguments("--headless=new");
             opts.addArguments("--no-sandbox");
+            opts.addArguments("--disable-blink-features=AutomationControlled");
             opts.addArguments("--disable-dev-shm-usage");
             opts.addArguments("--window-size=1920,1080");
             log.debug("Browser size is set to 1920,1080");
             opts.addArguments("--start-maximized");
+            opts.addArguments("user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) " +
+                    "AppleWebKit/537.36 (KHTML, like Gecko) Chrome/119.0.0.0 Safari/537.36");
+            opts.setExperimentalOption("excludeSwitches", Collections.singletonList("enable-automation"));
+            opts.setExperimentalOption("useAutomationExtension", false);
             log.debug("Chrome launched in headless mode.");
         }
         opts.addArguments(
