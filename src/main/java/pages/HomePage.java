@@ -32,8 +32,12 @@ public class HomePage extends BasePage {
     @Step("Click Sign In link")
     public LoginPage clickSignIn() {
         log.info("Check if the Continue shopping page displays");
-        if (continueShopping.isDisplayed()){
-            continueShopping.click();
+        if (isDisplayed(continueShopping)){
+            log.info("'Continue Shopping' page detected — clicking to dismiss.");
+            click(continueShopping);
+            log.info("Interstitial dismissed, proceeding to Sign In.");
+        }else {
+            log.info("'Continue Shopping' page not detected — proceeding directly.");
         }
         log.info("Clicking Sign In link → navigating to LoginPage.");
         click(signInLink);
