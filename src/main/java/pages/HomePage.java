@@ -14,6 +14,9 @@ public class HomePage extends BasePage {
     @FindBy(id = "nav-logo")
     private WebElement amazonLogo;
 
+    @FindBy(xpath = "//button[contains(text(),'Continue shopping')]")
+    private WebElement continueShopping;
+
     public HomePage(WebDriver driver) {
         super(driver);
     }
@@ -28,6 +31,10 @@ public class HomePage extends BasePage {
 
     @Step("Click Sign In link")
     public LoginPage clickSignIn() {
+        log.info("Check if the Continue shopping page displays");
+        if (continueShopping.isDisplayed()){
+            continueShopping.click();
+        }
         log.info("Clicking Sign In link → navigating to LoginPage.");
         click(signInLink);
         return new LoginPage(driver);
