@@ -11,6 +11,7 @@ on:
     branches: [ main ]
 
   workflow_dispatch:          # allows manual trigger from GitHub UI
+
     inputs:
       browser:
         description: 'Browser to run tests on'
@@ -36,6 +37,12 @@ on:
         description: 'Tag to use (e.g., @smoke, @regression)'
         required: false
         default: 'smoke'
+
+# ── Grant write access to GITHUB_TOKEN ───────────────────────────────────────
+permissions:
+  contents: write
+  actions: read
+  checks: write
 
 # ── Concurrency ─────────────────────────────────────────────────────────────────
 # Cancel in-progress runs on the same branch when a new push arrives.
@@ -85,6 +92,7 @@ jobs:
       # 5. Upload Allure raw results (used to generate the report)
       - name: Upload Allure results
         if: always()            # run even if tests fail
+        continue-on-error: true
         uses: actions/upload-artifact@v4
         with:
           name: allure-results
@@ -112,3 +120,4 @@ jobs:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           publish_branch: gh-pages
           publish_dir: allure-history
+          keep_files: false
