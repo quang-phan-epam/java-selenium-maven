@@ -89,22 +89,25 @@ public class DriverManager {
 
     private static WebDriver createChromeDriver(boolean headless) {
         log.debug("Setting up ChromeDriver via WebDriverManager.");
+        boolean isCI     = Boolean.parseBoolean(System.getProperty("ci.environment","false"));
         WebDriverManager.chromedriver().setup();
         ChromeOptions opts = new ChromeOptions();
         if (headless) {
             opts.addArguments("--headless=new");
-            opts.addArguments("--no-sandbox");
             opts.addArguments("--disable-blink-features=AutomationControlled");
-            opts.addArguments("--disable-dev-shm-usage");
-            opts.addArguments("--disable-gpu");
             opts.addArguments("--window-size=1920,1080");
-            log.debug("Browser size is set to 1920,1080");
             opts.addArguments("--start-maximized");
             opts.addArguments("user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) " +
                     "AppleWebKit/537.36 (KHTML, like Gecko) Chrome/119.0.0.0 Safari/537.36");
             opts.setExperimentalOption("excludeSwitches", Collections.singletonList("enable-automation"));
             opts.setExperimentalOption("useAutomationExtension", false);
             log.debug("Chrome launched in headless mode.");
+        }
+        if (isCI) {
+            opts.addArguments("--no-sandbox");            // required inside containers
+            opts.addArguments("--disable-dev-shm-usage"); // prevents shared memory crashes
+            opts.addArguments("--disable-gpu");
+            opts.addArguments("--disable-extensions");
         }
         opts.addArguments(
             "--start-maximized",

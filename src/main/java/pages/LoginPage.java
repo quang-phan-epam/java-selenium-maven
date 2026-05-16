@@ -8,7 +8,7 @@ import org.openqa.selenium.support.FindBy;
 
 public class LoginPage extends BasePage {
 
-    // ── Step 1: Email ──────────────────────────────────────────────────────────
+    /* ── Step 1: Email ──────────────────────────────────────────────────────────
     @FindBy(id = "ap_email_login")
     @CacheLookup
     private WebElement emailField;
@@ -35,7 +35,20 @@ public class LoginPage extends BasePage {
 
     // ── Post-login ─────────────────────────────────────────────────────────────
     @FindBy(id = "nav-link-accountList-nav-line-1")
-    private WebElement navGreetingLine;
+    private WebElement navGreetingLine;*/
+
+    @FindBy(id = "userName")
+    private WebElement usernameInput;
+
+    @FindBy(id = "password")
+    private WebElement passwordInput;
+
+    @FindBy(id = "login")
+    private WebElement loginButton;
+
+    // Shown after a failed login attempt
+    @FindBy(id = "name")
+    private WebElement invalidMessage;
 
     public LoginPage(WebDriver driver) {
         super(driver);
@@ -43,70 +56,66 @@ public class LoginPage extends BasePage {
 
     // ── Actions ────────────────────────────────────────────────────────────────
 
-    @Step("Enter email")
-    public LoginPage enterEmail(String email) {
-        log.info("Entering email address into email field.");
-        type(emailField, email);
-        return this;
-    }
-
-    @Step("Click Continue")
-    public LoginPage clickContinue() {
-        log.info("Clicking Continue button — advancing to password step.");
-        click(continueButton);
+    @Step("Enter username")
+    public LoginPage enterUsername(String username) {
+        log.info("Entering username into Username field.");
+        type(usernameInput, username);
         return this;
     }
 
     @Step("Enter password")
     public LoginPage enterPassword(String password) {
         log.info("Entering password (masked).");
-        type(passwordField, password);
+        type(passwordInput, password);
         return this;
     }
 
-    @Step("Click Sign In")
-    public HomePage clickSignIn() {
-        log.info("Clicking Sign In button — submitting credentials.");
-        click(signInButton);
-        return new HomePage(driver);
+    @Step("Click Login button")
+    public ProfilePage Login(String username, String password) {
+        log.info("Clicking Loging button — Navigate to Profile page");
+        enterUsername(username);
+        enterPassword(password);
+        scrollAndClick(loginButton);
+        return new ProfilePage(driver);
     }
 
-    @Step("Login with email and password")
-    public HomePage loginWith(String email, String password) {
-        log.info("Starting full two-step login flow.");
-        return enterEmail(email)
-                .clickContinue()
-                .enterPassword(password)
-                .clickSignIn();
-    }
-
-    // ── State Queries ──────────────────────────────────────────────────────────
-
-    public boolean isPasswordFieldVisible() {
-        boolean visible = isDisplayed(passwordField);
+    @Step("Assert that Username textfield is visible")
+    public boolean isUsernameFieldVisible() {
+        boolean visible = isDisplayed(usernameInput);
         log.debug("isPasswordFieldVisible() → [{}]", visible);
         return visible;
     }
 
-    public boolean isErrorDisplayed() {
-        boolean visible = isDisplayed(errorMessageBox);
-        log.debug("isErrorDisplayed() → [{}]", visible);
+    @Step("Assert that Password textfield is visible")
+    public boolean isPasswordFieldVisible() {
+        boolean visible = isDisplayed(passwordInput);
+        log.debug("isPasswordFieldVisible() → [{}]", visible);
         return visible;
     }
 
-    public boolean isEmailAlertDisplayed() {
-        boolean visible = isDisplayed(emailMissingAlert);
-        log.debug("isEmailAlertDisplayed() → [{}]", visible);
-        return visible;
+    @Step("Click Login button — expecting failure")
+    public LoginPage clickLoginExpectingFailure() {
+        log.info("Clicking Login button — expecting failure.");
+        scrollAndClick(loginButton);
+        return this;
     }
 
-    public String getErrorText() {
-        String text = getText(errorMessageBox);
-        log.warn("Error message displayed on page: [{}]", text);
-        return text;
+    @Step("Verify still on Login page (login failed)")
+    public boolean isStillOnLoginPage() {
+        boolean onPage = driver.getCurrentUrl().contains("/login");
+        log.info("Still on login page: {}", onPage);
+        return onPage;
     }
 
-    public String getNavGreeting() {
-        return getText(navGreetingLine);
+    @Step("Get invalid credentials message")
+    public String getInvalidMessage() {
+        // On DemoQA, failed login shows an "Invalid username or password!" message
+        if (isDisplayed(invalidMessage)) {
+            String errorMessage = getText(invalidMessage);
+            log.warn("Error message displayed on page: [{}]", errorMessage);
+            return errorMessage;
+        }
+        // Fallback: confirm we're still on the login page
+        return driver.getCurrentUrl().contains("/login") ? "Login failed" : "";
     }
 }

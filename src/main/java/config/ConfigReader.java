@@ -30,8 +30,14 @@ public class ConfigReader {
         }
     }
 
+    /** Returns the value for a key — system property overrides the file (useful for CI). */
     public static String get(String key) {
-
+        String sys = System.getProperty(key);
+        if(sys != null && !sys.isBlank())
+        {
+            log.debug("Config {} gets from system property", key);
+            return sys;
+        }
         String val = props.getProperty(key);
         if (val == null) {
             log.error("Config key not found: [{}]", key);

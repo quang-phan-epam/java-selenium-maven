@@ -1,0 +1,1 @@
+Sample text. This file is being used for Browser file upload.
