@@ -121,3 +121,15 @@ jobs:
           publish_branch: gh-pages
           publish_dir: allure-history
           keep_files: false
+            
+            # ── 8. Post report URL to job summary ───────────────────────────────────
+      - name: Post Allure report URL to summary
+        if: always()
+        run: |
+             echo "## ✅ Allure Test Report" >> $GITHUB_STEP_SUMMARY
+             echo "" >> $GITHUB_STEP_SUMMARY
+             echo "📊 [View Allure Report](https://quang-phan-epam.github.io/java-selenium-maven/${{ github.run_number }})" >> $GITHUB_STEP_SUMMARY
+             echo "" >> $GITHUB_STEP_SUMMARY
+             echo "🔢 Run number: ${{ github.run_number }}" >> $GITHUB_STEP_SUMMARY
+             echo "🌿 Branch: ${{ github.ref_name }}" >> $GITHUB_STEP_SUMMARY
+             echo "💬 Commit: ${{ github.sha }}" >> $GITHUB_STEP_SUMMARY
