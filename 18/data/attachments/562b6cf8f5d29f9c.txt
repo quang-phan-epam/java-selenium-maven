@@ -1,0 +1,1 @@
+Expected condition failed: waiting for visibility of Proxy element for: DefaultElementLocator 'By.id: userName' (tried for 30 second(s) with 500 milliseconds interval)
