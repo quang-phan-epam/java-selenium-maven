@@ -11,8 +11,9 @@
     <packaging>jar</packaging>
 
     <properties>
-        <maven.compiler.source>11</maven.compiler.source>
-        <maven.compiler.target>11</maven.compiler.target>
+        <maven.compiler.source>17</maven.compiler.source>
+        <maven.compiler.target>17</maven.compiler.target>
+        <maven.compiler.release>17</maven.compiler.release>
         <selenium.version>4.20.0</selenium.version>
         <webdrivermanager.version>5.8.0</webdrivermanager.version>
         <testng.version>7.9.0</testng.version>
