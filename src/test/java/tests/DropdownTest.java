@@ -16,7 +16,7 @@ import java.util.List;
 public class DropdownTest extends BaseTest {
 
     // ─────────────────────────────────────────────────────────────────────────
-    // TC-08a: Select a single option from the old-style dropdown
+    // TC-01: Select a single option from the old-style dropdown
     // ─────────────────────────────────────────────────────────────────────────
     @Test(description = "Select an option from the old-style select dropdown")
     @Story("Single-select dropdown")
@@ -33,7 +33,7 @@ public class DropdownTest extends BaseTest {
     }
 
     // ─────────────────────────────────────────────────────────────────────────
-    // TC-08b: Select an option by value attribute
+    // TC-02: Select an option by value attribute
     // ─────────────────────────────────────────────────────────────────────────
     @Test(description = "Select an option from the dropdown by its value attribute")
     @Story("Single-select dropdown by value")
@@ -51,7 +51,7 @@ public class DropdownTest extends BaseTest {
     }
 
     // ─────────────────────────────────────────────────────────────────────────
-    // TC-08c: Select multiple options from the multi-select list
+    // TC-03: Select multiple options from the multi-select list
     // ─────────────────────────────────────────────────────────────────────────
     @Test(description = "Select multiple options from the multi-select list")
     @Story("Multi-select dropdown")

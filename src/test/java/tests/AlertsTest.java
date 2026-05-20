@@ -13,7 +13,7 @@ import utils.DriverManager;
 public class AlertsTest extends BaseTest {
 
     // ─────────────────────────────────────────────────────────────────────────
-    // TC-06a: Simple Alert — accept
+    // TC-01: Simple Alert — accept
     // ─────────────────────────────────────────────────────────────────────────
     @Test(priority = 0, description = "Handle a simple alert popup")
     @Story("Simple alert")
@@ -30,7 +30,7 @@ public class AlertsTest extends BaseTest {
     }
 
     // ─────────────────────────────────────────────────────────────────────────
-    // TC-06b: Confirm popup — accept (OK)
+    // TC-02: Confirm popup — accept (OK)
     // ─────────────────────────────────────────────────────────────────────────
     @Test(priority = 1, description = "Handle confirm popup — click OK")
     @Story("Confirm popup — accept")
@@ -47,7 +47,7 @@ public class AlertsTest extends BaseTest {
     }
 
     // ─────────────────────────────────────────────────────────────────────────
-    // TC-06c: Confirm popup — dismiss (Cancel)
+    // TC-03: Confirm popup — dismiss (Cancel)
     // ─────────────────────────────────────────────────────────────────────────
     @Test(priority = 2, description = "Handle confirm popup — click Cancel")
     @Story("Confirm popup — dismiss")
@@ -64,7 +64,7 @@ public class AlertsTest extends BaseTest {
     }
 
     // ─────────────────────────────────────────────────────────────────────────
-    // TC-06d: Prompt popup — type text and accept
+    // TC-04: Prompt popup — type text and accept
     // ─────────────────────────────────────────────────────────────────────────
     @Test(priority = 3, description = "Handle prompt popup — type text and confirm")
     @Story("Prompt popup")

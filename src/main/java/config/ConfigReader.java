@@ -16,17 +16,22 @@ public class ConfigReader {
     private static final Properties props = new Properties();
 
     static {
+        String env = System.getProperty("env","qa").toLowerCase().trim();
+        String configFile = "config-" + env + ".properties";
+
+        log.info("Load config for environment: [{}] → file: [{}] ", env, configFile);
         try (InputStream in = ConfigReader.class
                 .getClassLoader()
-                .getResourceAsStream("config.properties"))
+                .getResourceAsStream(configFile))
         {
-            if (in == null) throw new RuntimeException("config.properties not found.");
+            if (in == null) throw new RuntimeException("config file ["+configFile+"] not found. +" +
+                    "Valid value are qa, staging, prod");
             props.load(in);
-            log.info("config.properties loaded successfully.");
+            log.info("Config loaded successfully → env=[{}] file=[{}]", env, configFile);
 
         } catch (IOException e) {
-            log.fatal("Failed to load config.properties", e);
-            throw new RuntimeException("Failed to load config.properties", e);
+            log.fatal("Failed to load config file [{}]",configFile, e);
+            throw new RuntimeException("Failed to load: "+ configFile, e);
         }
     }
 
@@ -47,6 +52,7 @@ public class ConfigReader {
         return val.trim();
     }
 
+    public static String  getEnv(){return get("env");}
     public static int     getInt(String key)     { return Integer.parseInt(get(key)); }
     public static boolean getBoolean(String key) { return Boolean.parseBoolean(get(key)); }
 }

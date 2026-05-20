@@ -8,11 +8,17 @@ import org.openqa.selenium.WebDriver;
 import org.testng.ITestResult;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
+import org.testng.annotations.BeforeSuite;
 import utils.AllureAttachmentUtils;
 import utils.DriverManager;
+import config.ConfigReader;
 
 import java.io.ByteArrayInputStream;
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
 import java.lang.reflect.Method;
+import java.util.Properties;
 
 /**
  * BaseTest
@@ -26,6 +32,34 @@ public class BaseTest {
 
     protected static final Logger log = LogManager.getLogger(BaseTest.class);
     protected WebDriver driver;
+
+    @BeforeSuite(alwaysRun = true)
+    public void setUpAllureEnvironment() {
+        String env     = ConfigReader.getEnv();
+        String baseUrl = ConfigReader.get("base.url");
+        String browser = ConfigReader.get("browser");
+
+        // Allure reads this file and displays it in the Environment widget
+        try {
+            Properties envProps = new Properties();
+            envProps.setProperty("Environment", env.toUpperCase());
+            envProps.setProperty("Base.URL",    baseUrl);
+            envProps.setProperty("Browser",     browser);
+            envProps.setProperty("Java",        System.getProperty("java.version"));
+
+            File dir = new File("target/allure-results");
+            dir.mkdirs();
+
+            try (FileOutputStream out = new FileOutputStream(
+                    new File(dir, "environment.properties"))) {
+                envProps.store(out, "Allure Environment Info");
+            }
+            log.info("Allure environment.properties written for env=[{}]", env);
+
+        } catch (IOException e) {
+            log.warn("Could not write Allure environment.properties: {}", e.getMessage());
+        }
+    }
 
     @BeforeMethod(alwaysRun = true)
     public void setUp(Method method) {

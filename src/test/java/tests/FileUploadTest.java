@@ -15,7 +15,7 @@ import java.io.File;
 public class FileUploadTest extends BaseTest {
 
     // ─────────────────────────────────────────────────────────────────────────
-    // TC-07: Upload a file and verify the filename is shown on the page
+    // TC-01: Upload a file and verify the filename is shown on the page
     // ─────────────────────────────────────────────────────────────────────────
     @Test(description = "Upload a file and verify the filename appears on screen")
     @Story("Browser file upload")

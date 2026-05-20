@@ -32,6 +32,7 @@ on:
         type: choice
         options:
           - qa
+          - staging
           - prod
       tag:
         description: 'Tag to use (e.g., @smoke, @regression)'
@@ -55,6 +56,13 @@ jobs:
   test:
     runs-on: ubuntu-latest
 
+    # ── Resolve environment ───────────────────────────────────────────────────
+    # On push/PR → always use 'qa'
+    # On manual trigger → use whatever was selected in the UI dropdown
+    env:
+      TARGET_ENV: ${{ github.event.inputs.environment || 'qa' }}
+      RUN_HEADLESS: ${{ github.event.inputs.headless || 'true' }}
+
     steps:
 
       # 1. Checkout source code
@@ -77,25 +85,58 @@ jobs:
             | sudo tee /etc/apt/sources.list.d/google-chrome.list
           sudo apt-get update -q
           sudo apt-get install -y google-chrome-stable
+          
+      # ── Credentials: each env has its own GitHub Secret ───
+      # Secrets setup:    Settings → Secrets → Actions → New repository secret
+      # Required secrets: QA_USERNAME, QA_PASSWORD
+      #                   STAGING_USERNAME, STAGING_PASSWORD
+      #                   PROD_USERNAME, PROD_PASSWORD
+      - name: Set environment credentials
+        id: creds
+        run: |
+          ENV="${{ env.TARGET_ENV }}"
+          echo "Resolving credentials for env: $ENV"
+
+          if [ "$ENV" = "qa" ]; then
+            echo "username=${{ secrets.QA_USERNAME }}"       >> $GITHUB_OUTPUT
+            echo "password=${{ secrets.QA_PASSWORD }}"       >> $GITHUB_OUTPUT
+
+          elif [ "$ENV" = "staging" ]; then
+            echo "username=${{ secrets.STAGING_USERNAME }}"  >> $GITHUB_OUTPUT
+            echo "password=${{ secrets.STAGING_PASSWORD }}"  >> $GITHUB_OUTPUT
+
+          elif [ "$ENV" = "prod" ]; then
+            echo "username=${{ secrets.PROD_USERNAME }}"     >> $GITHUB_OUTPUT
+            echo "password=${{ secrets.PROD_PASSWORD }}"     >> $GITHUB_OUTPUT
+          fi
 
       # 4. Run tests — headless + CI flags passed as system properties
-      - name: Run Selenium tests
+      - name: Run Selenium tests on [${{ env.TARGET_ENV }}]
         run: |
           mvn test \
             -Dbrowser=chrome \
-            -Dheadless=true \
+            -Dheadless=${{ env.RUN_HEADLESS }} \
+            -Denv=${{ env.TARGET_ENV }} \
             -Dci.environment=true \
-            -Dusername=${{ secrets.DEMOQA_USERNAME }} \
-            -Dpassword=${{ secrets.DEMOQA_PASSWORD }} \
+            -Dusername=${{ steps.creds.outputs.username }} \
+            -Dpassword=${{ steps.creds.outputs.password }} \
             --no-transfer-progress
 
       # 5. Upload Allure raw results (used to generate the report)
+      - name: Get Allure history
+        uses: actions/checkout@v4
+        if: always()
+        continue-on-error: true
+        with:
+            ref: gh-pages
+            path: gh-pages
+
       - name: Upload Allure results
         if: always()            # run even if tests fail
         continue-on-error: true
         uses: actions/upload-artifact@v4
         with:
-          name: allure-results
+          name: allure-results-${{ env.TARGET_ENV }}-run${{ github.run_number }}
           path: target/allure-results/
 
       # 6. Upload failure screenshots (only when tests fail)
@@ -103,7 +144,7 @@ jobs:
         if: failure()
         uses: actions/upload-artifact@v4
         with:
-          name: failure-screenshots
+          name: screenshots-${{ env.TARGET_ENV }}-run${{ github.run_number }}
           path: target/screenshots/
 
       # 7. Generate and publish the Allure HTML report
@@ -112,6 +153,9 @@ jobs:
         uses: simple-elf/allure-report-action@master
         with:
           allure_results: target/allure-results
+          gh_pages: gh-pages
+          allure_report: allure-report
+          allure_history: allure-history
 
       - name: Deploy Allure report to GitHub Pages
         if: always()
@@ -120,8 +164,7 @@ jobs:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           publish_branch: gh-pages
           publish_dir: allure-history
-          keep_files: false
-            
+
             # ── 8. Post report URL to job summary ───────────────────────────────────
       - name: Post Allure report URL to summary
         if: always()
@@ -130,6 +173,8 @@ jobs:
              echo "" >> $GITHUB_STEP_SUMMARY
              echo "📊 [View Allure Report](https://quang-phan-epam.github.io/java-selenium-maven/${{ github.run_number }})" >> $GITHUB_STEP_SUMMARY
              echo "" >> $GITHUB_STEP_SUMMARY
+             echo "Environment: ${{env.TARGET_ENV}}" >> $GITHUB_STEP_SUMMARY
+             echo "Headless: ${{env.RUN_HEADLESS}}" >> $GITHUB_STEP_SUMMARY
              echo "🔢 Run number: ${{ github.run_number }}" >> $GITHUB_STEP_SUMMARY
              echo "🌿 Branch: ${{ github.ref_name }}" >> $GITHUB_STEP_SUMMARY
              echo "💬 Commit: ${{ github.sha }}" >> $GITHUB_STEP_SUMMARY

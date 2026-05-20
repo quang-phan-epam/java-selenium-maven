@@ -15,7 +15,7 @@ public class FrameTest extends BaseTest {
     private static final String EXPECTED_FRAME_TEXT = "This is a sample page";
 
     // ─────────────────────────────────────────────────────────────────────────
-    // TC-05a: Read text from Frame 1
+    // TC-01: Read text from Frame 1
     // ─────────────────────────────────────────────────────────────────────────
     @Test(description = "Read heading text from Frame 1")
     @Story("Switch into frame and read content")
@@ -32,7 +32,7 @@ public class FrameTest extends BaseTest {
     }
 
     // ─────────────────────────────────────────────────────────────────────────
-    // TC-05b: Read text from Frame 2
+    // TC-02: Read text from Frame 2
     // ─────────────────────────────────────────────────────────────────────────
     @Test(description = "Read heading text from Frame 2")
     @Story("Switch into frame and read content")
