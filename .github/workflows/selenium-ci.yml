@@ -60,8 +60,8 @@ jobs:
     # On push/PR → always use 'qa'
     # On manual trigger → use whatever was selected in the UI dropdown
     env:
-      TARGET_ENV: ${{ github.event.inputs.environment || 'qa' }}
-      RUN_HEADLESS: ${{ github.event.inputs.headless || 'true' }}
+      TARGET_ENV: ${{ inputs.environment || 'qa' }}
+      RUN_HEADLESS: ${{ inputs.headless || 'true' }}
 
     steps:
 
