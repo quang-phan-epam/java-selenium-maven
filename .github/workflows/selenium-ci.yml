@@ -55,19 +55,48 @@ concurrency:
 jobs:
   test:
     runs-on: ubuntu-latest
-
-    # ── Resolve environment ───────────────────────────────────────────────────
-    # On push/PR → always use 'qa'
-    # On manual trigger → use whatever was selected in the UI dropdown
-    env:
-      TARGET_ENV: ${{ inputs.environment || 'qa' }}
-      RUN_HEADLESS: ${{ inputs.headless || 'true' }}
-
     steps:
 
       # 1. Checkout source code
       - name: Checkout repository
         uses: actions/checkout@v4
+
+      # Shell runs at runtime when all contexts are fully available.
+      # Write resolved values to GITHUB_OUTPUT so every subsequent
+      # step can read them via steps.setup.outputs.<name>
+      - name: Resolve run parameters
+        id: setup
+        run: |
+          # ── Environment ─────────────────────────────────────────────
+          # Read the raw input value directly from the shell environment
+          RAW_ENV="${{ github.event.inputs.environment }}"
+
+          # If empty (push/PR trigger has no inputs) → default to 'qa'
+          if [ -z "$RAW_ENV" ]; then
+            TARGET_ENV="qa"
+          else
+            TARGET_ENV="$RAW_ENV"
+          fi
+
+          # ── Headless ──────────────────────────────────────────────────
+          RAW_HEADLESS="${{ github.event.inputs.headless }}"
+          if [ -z "$RAW_HEADLESS" ]; then
+            RUN_HEADLESS="true"
+          else
+            RUN_HEADLESS="$RAW_HEADLESS"
+          fi
+
+          # ── Write to GITHUB_OUTPUT ────────────────────────────────────────────
+          echo "target_env=$TARGET_ENV"     >> $GITHUB_OUTPUT
+          echo "run_headless=$RUN_HEADLESS" >> $GITHUB_OUTPUT
+
+          # ── Print so you can verify in logs ───────────────────────────────────
+          echo "================================================"
+          echo "  github.event_name = ${{ github.event_name }}"
+          echo "  RAW INPUT ENV     = $RAW_ENV"
+          echo "  RESOLVED ENV      = $TARGET_ENV"
+          echo "  RESOLVED HEADLESS = $RUN_HEADLESS"
+          echo "================================================"
 
       # 2. Set up Java 17 (matches pom.xml compiler settings)
       - name: Set up JDK 17
@@ -91,32 +120,32 @@ jobs:
       # Required secrets: QA_USERNAME, QA_PASSWORD
       #                   STAGING_USERNAME, STAGING_PASSWORD
       #                   PROD_USERNAME, PROD_PASSWORD
-      - name: Set environment credentials
+      - name: Resolve credentials for [${{ steps.setup.outputs.target_env }}]
         id: creds
         run: |
-          ENV="${{ env.TARGET_ENV }}"
-          echo "Resolving credentials for env: $ENV"
+          ENV="${{ steps.setup.outputs.target_env }}"
+          echo "Resolving credentials for env=[$ENV]"
 
           if [ "$ENV" = "qa" ]; then
-            echo "username=${{ secrets.QA_USERNAME }}"       >> $GITHUB_OUTPUT
-            echo "password=${{ secrets.QA_PASSWORD }}"       >> $GITHUB_OUTPUT
+            echo "username=${{ secrets.DEMOQA_PASSWORD }}" >> $GITHUB_OUTPUT
+            echo "password=${{ secrets.DEMOQA_USERNAME }}" >> $GITHUB_OUTPUT
 
           elif [ "$ENV" = "staging" ]; then
             echo "username=${{ secrets.STAGING_USERNAME }}"  >> $GITHUB_OUTPUT
             echo "password=${{ secrets.STAGING_PASSWORD }}"  >> $GITHUB_OUTPUT
 
           elif [ "$ENV" = "prod" ]; then
-            echo "username=${{ secrets.PROD_USERNAME }}"     >> $GITHUB_OUTPUT
-            echo "password=${{ secrets.PROD_PASSWORD }}"     >> $GITHUB_OUTPUT
+            echo "username=${{ secrets.PROD_USERNAME }}" >> $GITHUB_OUTPUT
+            echo "password=${{ secrets.PROD_PASSWORD }}" >> $GITHUB_OUTPUT
           fi
 
       # 4. Run tests — headless + CI flags passed as system properties
-      - name: Run Selenium tests on [${{ env.TARGET_ENV }}]
+      - name: Run tests on [${{ steps.setup.outputs.target_env }}]
         run: |
           mvn test \
             -Dbrowser=chrome \
-            -Dheadless=${{ env.RUN_HEADLESS }} \
-            -Denv=${{ env.TARGET_ENV }} \
+            -Dheadless=${{ steps.setup.outputs.run_headless }} \
+            -Denv=${{ steps.setup.outputs.target_env }} \
             -Dci.environment=true \
             -Dusername=${{ steps.creds.outputs.username }} \
             -Dpassword=${{ steps.creds.outputs.password }} \
