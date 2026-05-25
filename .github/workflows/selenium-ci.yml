@@ -67,6 +67,15 @@ jobs:
       - name: Resolve run parameters
         id: setup
         run: |
+          # ── Browser ─────────────────────────────────────────────
+          # Read the raw input value directly from the shell environment
+          RAW_BROWSER="${{ github.event.inputs.browser }}"
+          RUN_BROWSER="${RAW_BROWSER:-chrome}"
+          
+          #----Tag-----
+          RAW_TAG="${{ github.event.inputs.tag }}"
+          RUN_TAG="${RAW_TAG:-smoke}"
+
           # ── Environment ─────────────────────────────────────────────
           # Read the raw input value directly from the shell environment
           RAW_ENV="${{github.event.inputs.env}}"
@@ -89,6 +98,8 @@ jobs:
           # ── Write to GITHUB_OUTPUT ────────────────────────────────────────────
           echo "target_env=$TARGET_ENV"     >> $GITHUB_OUTPUT
           echo "run_headless=$RUN_HEADLESS" >> $GITHUB_OUTPUT
+          echo "run_browser=$RUN_BROWSER"   >> $GITHUB_OUTPUT
+          echo "run_tag=$RUN_TAG"           >> $GITHUB_OUTPUT
 
           # ── Print so you can verify in logs ───────────────────────────────────
           echo "================================================"
@@ -96,6 +107,8 @@ jobs:
           echo "  RAW INPUT ENV     = $RAW_ENV"
           echo "  RESOLVED ENV      = $TARGET_ENV"
           echo "  RESOLVED HEADLESS = $RUN_HEADLESS"
+          echo "  BROWSER           = $RUN_BROWSER"
+          echo "  TAG               = $RUN_TAG"
           echo "================================================"
 
       # 2. Set up Java 17 (matches pom.xml compiler settings)
@@ -106,14 +119,37 @@ jobs:
           distribution: 'temurin'
           cache: maven
 
-      # 3. Install Chrome (latest stable)
+      #3 Install browser based on the selected browser
+      # 3.1. Install Chrome (latest stable)
       - name: Install Google Chrome
+        if: steps.setup.outputs.run_browser == 'chrome'
         run: |
           wget -q -O - https://dl.google.com/linux/linux_signing_key.pub | sudo apt-key add -
           echo "deb [arch=amd64] http://dl.google.com/linux/chrome/deb/ stable main" \
             | sudo tee /etc/apt/sources.list.d/google-chrome.list
           sudo apt-get update -q
           sudo apt-get install -y google-chrome-stable
+
+      # 3.2. Install FF (latest stable)
+      - name: Install Firefox
+        if: steps.setup.outputs.run_browser == 'firefox'
+        run: |
+          sudo apt-get update -q
+          sudo apt-get install -y firefox
+          firefox --version
+
+      # 3.3. Install Edge (latest stable)
+      - name: Install Edge
+        if: steps.setup.outputs.run_browser == 'edge'
+        run: |
+          curl -fsSL https://packages.microsoft.com/keys/microsoft.asc \
+            | sudo gpg --dearmor -o /usr/share/keyrings/microsoft.gpg
+          echo "deb [arch=amd64 signed-by=/usr/share/keyrings/microsoft.gpg] \
+            https://packages.microsoft.com/repos/edge stable main" \
+            | sudo tee /etc/apt/sources.list.d/microsoft-edge.list
+          sudo apt-get update -q
+          sudo apt-get install -y microsoft-edge-stable
+          microsoft-edge --version
           
       # ── Credentials: each env has its own GitHub Secret ───
       # Secrets setup:    Settings → Secrets → Actions → New repository secret
@@ -140,7 +176,7 @@ jobs:
           fi
 
       # 4. Run tests — headless + CI flags passed as system properties
-      - name: Run tests on [${{ steps.setup.outputs.target_env }}]
+      - name: Run tests on [${{ steps.setup.outputs.target_env }}] browser=[${{ steps.setup.outputs.run_browser }}]
         run: |
           mvn test \
             -Dbrowser=chrome \
@@ -165,7 +201,7 @@ jobs:
         continue-on-error: true
         uses: actions/upload-artifact@v4
         with:
-          name: allure-results-[${{ steps.setup.outputs.target_env }}]-run${{ github.run_number }}
+          name: allure-results-[${{ steps.setup.outputs.target_env }}]-[${{ steps.setup.outputs.run_browser }}]-run${{ github.run_number }}
           path: target/allure-results/
 
       # 6. Upload failure screenshots (only when tests fail)
@@ -173,7 +209,7 @@ jobs:
         if: failure()
         uses: actions/upload-artifact@v4
         with:
-          name: screenshots-[${{ steps.setup.outputs.target_env }}]-run${{ github.run_number }}
+          name: screenshots-[${{ steps.setup.outputs.target_env }}]-[${{ steps.setup.outputs.run_browser }}]-run${{ github.run_number }}
           path: target/screenshots/
 
       # 7. Generate and publish the Allure HTML report
