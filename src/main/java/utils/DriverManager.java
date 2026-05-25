@@ -1,7 +1,7 @@
 package utils;
 
 import config.ConfigReader;
-import io.github.bonigarcia.wdm.WebDriverManager;
+//import io.github.bonigarcia.wdm.WebDriverManager;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.openqa.selenium.WebDriver;
@@ -90,7 +90,7 @@ public class DriverManager {
     private static WebDriver createChromeDriver(boolean headless) {
         log.debug("Setting up ChromeDriver via WebDriverManager.");
         boolean isCI     = Boolean.parseBoolean(System.getProperty("ci.environment","false"));
-        WebDriverManager.chromedriver().setup();
+        //WebDriverManager.chromedriver().setup();
         ChromeOptions opts = new ChromeOptions();
         if (headless) {
             opts.addArguments("--headless=new");
@@ -121,18 +121,31 @@ public class DriverManager {
 
     private static WebDriver createFirefoxDriver(boolean headless) {
         log.debug("Setting up FirefoxDriver via WebDriverManager.");
-        WebDriverManager.firefoxdriver().setup();
+        //WebDriverManager.firefoxdriver().setup();
         FirefoxOptions opts = new FirefoxOptions();
-        if (headless) opts.addArguments("--headless");
+        if (headless){
+            {
+                opts.addArguments("--headless");
+                opts.addArguments("--width=1920");
+                opts.addArguments("--height=1080");
+            }
+        }
+        log.debug("FirefoxOptions configured. headless={}", headless);
         return new FirefoxDriver(opts);
     }
 
     private static WebDriver createEdgeDriver(boolean headless) {
         log.debug("Setting up EdgeDriver via WebDriverManager.");
-        WebDriverManager.edgedriver().setup();
+        //WebDriverManager.edgedriver().setup();
         EdgeOptions opts = new EdgeOptions();
-        if (headless) opts.addArguments("--headless=new");
-        opts.addArguments("--no-sandbox", "--disable-dev-shm-usage");
+        if (headless)
+        {
+            opts.addArguments("--headless=new");
+            opts.addArguments("--no-sandbox", "--disable-dev-shm-usage");
+            opts.addArguments("--disable-gpu");
+            opts.addArguments("--disable-extensions");
+        }
+        log.debug("EdgeOptions configured. headless={}", headless);
         return new EdgeDriver(opts);
     }
 }

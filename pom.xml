@@ -15,7 +15,7 @@
         <maven.compiler.target>17</maven.compiler.target>
         <maven.compiler.release>17</maven.compiler.release>
         <selenium.version>4.20.0</selenium.version>
-        <webdrivermanager.version>5.8.0</webdrivermanager.version>
+        <!--webdrivermanager.version>5.8.0</webdrivermanager.version-->
         <testng.version>7.9.0</testng.version>
         <allure.version>2.27.0</allure.version>
         <aspectj.version>1.9.21</aspectj.version>
@@ -42,11 +42,11 @@
             </exclusions>
         </dependency>
 
-        <dependency>
+        <!--dependency>
             <groupId>io.github.bonigarcia</groupId>
             <artifactId>webdrivermanager</artifactId>
             <version>${webdrivermanager.version}</version>
-        </dependency>
+        </dependency-->
 
         <!-- ── TestNG ────────────────────────────────────────────── -->
         <dependency>
