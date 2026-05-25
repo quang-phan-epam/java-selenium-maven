@@ -179,7 +179,7 @@ jobs:
       - name: Run tests on [${{ steps.setup.outputs.target_env }}] browser=[${{ steps.setup.outputs.run_browser }}]
         run: |
           mvn test \
-            -Dbrowser=chrome \
+            -Dbrowser=${{ steps.setup.outputs.run_browser }} \
             -Dheadless=${{ steps.setup.outputs.run_headless }} \
             -Denv=${{ steps.setup.outputs.target_env }} \
             -Dci.environment=true \
