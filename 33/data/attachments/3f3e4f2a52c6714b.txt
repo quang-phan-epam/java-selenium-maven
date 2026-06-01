@@ -1,8 +1,0 @@
-unknown error: net::ERR_NAME_NOT_RESOLVED
-  (Session info: MicrosoftEdge=148.0.3967.96)
-Build info: version: '4.20.0', revision: '866c76ca80'
-System info: os.name: 'Linux', os.arch: 'amd64', os.version: '6.17.0-1015-azure', java.version: '17.0.19'
-Driver info: org.openqa.selenium.edge.EdgeDriver
-Command: [50c72f2b0f2eeebc8bb186c12f1c710c, get {url=https://demoqa-stg.com/books}]
-Capabilities {acceptInsecureCerts: false, browserName: MicrosoftEdge, browserVersion: 148.0.3967.96, fedcm:accounts: true, goog:processID: 4091, ms:edgeOptions: {debuggerAddress: localhost:43257}, msedge: {msedgedriverVersion: 148.0.3967.83 (2db6d3cb8b2d..., userDataDir: /tmp/com.microsoft.Edge.sco...}, networkConnectionEnabled: false, pageLoadStrategy: normal, platformName: linux, proxy: Proxy(), se:cdp: ws://localhost:43257/devtoo..., se:cdpVersion: 148.0.3967.96, setWindowRect: true, strictFileInteractability: false, timeouts: {implicit: 0, pageLoad: 300000, script: 30000}, unhandledPromptBehavior: dismiss and notify, webauthn:extension:credBlob: true, webauthn:extension:largeBlob: true, webauthn:extension:minPinLength: true, webauthn:extension:prf: true, webauthn:virtualAuthenticators: true}
-Session ID: 50c72f2b0f2eeebc8bb186c12f1c710c
